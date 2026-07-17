@@ -1,0 +1,23 @@
+# default tls options (to try get 100% for ciphers on qualys labs)
+# but cannot exceed 90% for key exchange and cipher strength
+# for key exchange, cannot enable Session resumption (caching) (not supported atm by the go lib)
+# for ciphers, cannot modify tls 1.3 ciphers, which includes 128 cipher
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+spec:
+  minVersion: VersionTLS12
+  # for V1.2. No configuration for ciphers for 1.3, they are considered secure
+  # disable 128 ciphers if you want more security
+  cipherSuites:
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+  curvePreferences:
+    - CurveP256
+    - CurveP384
+

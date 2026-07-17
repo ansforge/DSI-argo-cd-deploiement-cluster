@@ -1,0 +1,22 @@
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: cluster-store
+spec:
+  provider:
+    ovh:
+      server: "https://eu-west-par.okms.ovh.net"
+      okmsid: "b707cab4-4156-4208-8c59-161a36433f86"
+      casRequired: false
+      okmsTimeout: 30
+      auth:
+        mtls:
+          certSecretRef:
+            name: secret-manager-creds
+            key: tls.crt
+            namespace: external-secrets
+          keySecretRef:
+            name: secret-manager-creds
+            key: tls.key
+            namespace: external-secrets
+

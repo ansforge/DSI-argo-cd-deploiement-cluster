@@ -1,0 +1,70 @@
+# Default values for test
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+image:
+  tag: "1.1"
+
+ingress:
+  ## Set to true to enable ingress record generation
+  ##
+  enabled: true
+
+  ## When the ingress is enabled, a host pointing to this will be created
+  ##
+  # not specified -> not specified in template
+  hostname: "mon-support.si-samu.fr"
+
+  ## Defines which ingress controller will implement the resource
+  ingressClassName: "traefik"
+
+  ## Additional ingress annotations
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.middlewares: rag-si-samu-http-basic@kubernetescrd
+
+  ## Ingress TLS configuration
+  tls:
+    - secretName: rag-si-samu-tls-certificate
+      hosts:
+        - "mon-support.si-samu.fr"
+
+# affinity: none, soft or hard
+affinity: "none"
+
+# topologySpreadConstraints: boolean
+topologySpreadConstraints: true
+
+# -- Minimum available pods set in PodDisruptionBudget.
+# Define either 'minAvailable' or 'maxUnavailable', never both.
+minAvailable: 1
+# -- Maximum unavailable pods set in PodDisruptionBudget. If set, 'minAvailable' is ignored.
+# maxUnavailable: 1
+
+env:
+  - name: AUTH_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: rag-si-samu-secret
+        key: AUTH_SECRET  
+  - name: AUTH_URL
+    valueFrom:
+      secretKeyRef:
+        name: rag-si-samu-secret 
+        key: AUTH_URL
+  - name: AUTH_CLIENT_ID
+    valueFrom:
+      secretKeyRef:
+        name: rag-si-samu-secret
+        key: AUTH_CLIENT_ID
+  - name: AUTH_CLIENT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: rag-si-samu-secret
+        key: AUTH_CLIENT_SECRET
+  - name: AUTH_ENV_NAME
+    valueFrom:
+      secretKeyRef:
+        name: rag-si-samu-secret
+        key: AUTH_ENV_NAME

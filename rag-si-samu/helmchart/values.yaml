@@ -1,0 +1,88 @@
+# Default values for rag-si-samu
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 3
+
+image:
+  repository: "589t710u.eu-west-par.container-registry.ovh.net/production/chatbot"
+  tag: "1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: 
+  - name: secretharborregistry
+
+# service
+service:
+  type: ClusterIP
+  port: 3000
+
+# ingress
+ingress:
+  ## Set to true to enable ingress record generation
+  ##
+  enabled: false
+
+  ## When the ingress is enabled, a host pointing to this will be created
+  ##
+  # not specified -> not specified in template
+  hostname: "test.example.com"
+
+  # if not specified -> /
+  #path: /test(/|$)(.*)
+
+  ## Defines which ingress controller will implement the resource
+  ingressClassName: "traefik"
+
+  ## Additional ingress annotations
+  annotations: {}
+
+  # -- Ingress TLS configuration
+  tls: []
+
+  ## If you're providing your own certificates, please use this to add the certificates as secrets
+  ## key and certificate should start with -----BEGIN CERTIFICATE----- or -----BEGIN RSA PRIVATE KEY-----
+  ## name should line up with a secretName set further up
+  ##
+  ## If it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you
+  ## If it is not set and you're NOT using cert-manager either, self-signed certificates will be created
+  ## It is also possible to create and manage the certificates outside of this helm chart
+  ## Please see README.md for more information
+  ##
+  ## Example
+  ## secrets:
+  ##   - name: aspnet-core.local-tls
+  ##     key: ""
+  ##     certificate: ""
+  ##
+  secrets: []
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 200m
+  #   memory: 256Mi
+  # requests:
+  #   cpu: 200m
+  #   memory: 10Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+# affinity: none, soft or hard
+affinity: ""
+
+# topologySpreadConstraints: boolean
+topologySpreadConstraints: false
+
+env: []
+
+# -- Minimum available pods set in PodDisruptionBudget.
+# Define either 'minAvailable' or 'maxUnavailable', never both.
+minAvailable: 1
+# -- Maximum unavailable pods set in PodDisruptionBudget. If set, 'minAvailable' is ignored.
+# maxUnavailable: 1
