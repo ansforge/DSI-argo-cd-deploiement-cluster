@@ -63,8 +63,3 @@ env:
       secretKeyRef:
         name: rag-si-samu-secret
         key: AUTH_CLIENT_SECRET
-  - name: AUTH_ENV_NAME
-    valueFrom:
-      secretKeyRef:
-        name: rag-si-samu-secret
-        key: AUTH_ENV_NAME
