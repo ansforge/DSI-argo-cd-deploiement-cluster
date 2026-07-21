@@ -87,7 +87,7 @@ traefik:
       enabled: false
 
     # @schema additionalProperties: false
-    kubernetesIngressNginx:
+    kubernetesIngressNGINX:
       # -- Enable Kubernetes Ingress NGINX provider (experimental)
       enabled: false
 
@@ -96,25 +96,24 @@ traefik:
       # -- Enable Knative provider
       enabled: false
 
-  logs:
-    general:
-      # -- Set [logs format](https://doc.traefik.io/traefik/observability/logs/#format)
-      format:  # @schema enum:["common", "json", null]; type:[string, null]; default: "common"
-      # By default, the level is set to INFO.
-      # -- Alternative logging levels are TRACE, DEBUG, INFO, WARN, ERROR, FATAL, and PANIC.
-      level: "INFO"  # @schema enum:[TRACE,DEBUG,INFO,WARN,ERROR,FATAL,PANIC]; default: "INFO"
-      otlp:
-        # -- Set to true in order to enable OpenTelemetry on logs. Note that experimental.otlpLogs needs to be enabled.
-        enabled: false
-
-    access:
-      # -- To enable access logs
+  log:
+    # -- Set [logs format](https://doc.traefik.io/traefik/observability/logs/#format)
+    format:  # @schema enum:["common", "json", null]; type:[string, null]; default: "common"
+    # By default, the level is set to INFO.
+    # -- Alternative logging levels are TRACE, DEBUG, INFO, WARN, ERROR, FATAL, and PANIC.
+    level: "INFO"  # @schema enum:[TRACE,DEBUG,INFO,WARN,ERROR,FATAL,PANIC]; default: "INFO"
+    otlp:
+      # -- Set to true in order to enable OpenTelemetry on logs. Note that experimental.otlpLogs needs to be enabled.
       enabled: false
-      # -- Set [access log format](https://doc.traefik.io/traefik/observability/access-logs/#format)
-      format:  # @schema enum:["common", "genericCLF", "json", null]; type:[string, null]; default: "common"
-      otlp:
-        # -- Set to true in order to enable OpenTelemetry on access logs. Note that experimental.otlpLogs needs to be enabled.
-        enabled: false
+
+  accessLog:
+    # -- To enable access logs
+    enabled: false
+    # -- Set [access log format](https://doc.traefik.io/traefik/observability/access-logs/#format)
+    format:  # @schema enum:["common", "genericCLF", "json", null]; type:[string, null]; default: "common"
+    otlp:
+      # -- Set to true in order to enable OpenTelemetry on access logs. Note that experimental.otlpLogs needs to be enabled.
+      enabled: false
 
   metrics:
     # -- Enable metrics for internal resources. Default: false
@@ -143,6 +142,7 @@ traefik:
     #     jobLabel: ""
     #     interval: ""
     #     honorLabels: false
+    #
     #     scrapeTimeout: ""
     #     honorTimestamps: false
     #     enableHttp2: false
@@ -250,10 +250,6 @@ traefik:
     # -- Enable persistence using Persistent Volume Claims
     # ref: http://kubernetes.io/docs/user-guide/persistent-volumes/.
     # It can be used to store TLS certificates along with `certificatesResolvers.<name>.acme.storage`  option
-    enabled: false
-
-  # -- Enable to create a PodSecurityPolicy and assign it to the Service Account via RoleBinding or ClusterRoleBinding
-  podSecurityPolicy:
     enabled: false
 
   # -- [Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for `traefik` container.
