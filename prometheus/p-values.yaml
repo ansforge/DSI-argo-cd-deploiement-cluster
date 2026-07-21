@@ -1,0 +1,397 @@
+kube-prometheus-stack:
+  ## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
+  ##
+  grafana:
+    enabled: true
+
+    #useStatefulSet: true
+    persistence:
+      enabled: true
+      type: sts
+      size: 2Gi
+
+    # grafana has pvc -> use Recreate instead of RollingUpdate
+    deploymentStrategy:
+      type: Recreate
+
+    # Administrator credentials when not using an existing secret (see below)
+    # Used at first boot
+    adminUser: firstuser
+    adminPassword: toto
+
+    # Use an existing secret for the admin user.
+    #admin:
+    #  ## Name of the secret. Can be templated.
+    #  existingSecret: ""
+    #  userKey: admin-user
+    #  passwordKey: admin-password
+
+    # better with configmap
+    grafana.ini:
+      server:
+        root_url: https://grafana.esante.gouv.fr
+      auth:
+        disable_login_form: false
+        oauth_auto_login: false
+
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      hosts:
+        - grafana.esante.gouv.fr
+      path: /
+      tls:
+      - secretName: grafana-general-tls
+        hosts:
+        - grafana.esante.gouv.fr
+
+    initChownData:
+      resources:
+        limits:
+         #cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
+    sidecar:
+      # sidecars to watch dashboards / datasources modifications in configmaps
+      # not stable, can crash and not needed => disabled here as dashboards already created
+      # dashboards:
+      #   enabled: false
+      # datasources:
+      #   enabled: false
+
+      resources:
+        limits:
+          #cpu: 100m
+          memory: 512Mi
+        requests:
+          cpu: 50m
+          memory: 50Mi
+
+    resources:
+      limits:
+    #    cpu: 100m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    #
+
+  ## Component scraping the kube controller manager
+  ## MKS = Managed => no access on manager
+  kubeControllerManager:
+    enabled: false
+
+  ## Component scraping etcd
+  ## MKS = Managed => no access on manager
+  kubeEtcd:
+    enabled: false
+
+  ## Component scraping kube scheduler
+  ## MKS = Managed => no access on manager
+  kubeScheduler:
+    enabled: false
+
+  ## Manages Prometheus and Alertmanager components
+  ##
+  prometheusOperator:
+    enabled: true
+
+    ## Admission webhook support for PrometheusRules resources added in Prometheus Operator 0.30 can be enabled to prevent incorrectly formatted
+    ## rules from making their way into prometheus and potentially preventing the container from starting
+    admissionWebhooks:
+      enabled: true
+      # if problems with X509 certificates, set: failurePolicy: Ignore
+      # failurePolicy: Fail
+      failurePolicy: Ignore
+      patch:
+        resources: {}
+
+    ## Resource limits & requests
+    ##
+    resources:
+      limits:
+    #   cpu: 200m
+        memory: 200Mi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+
+    prometheusConfigReloader:
+      # resource config for prometheusConfigReloader
+      resources:
+        requests:
+          #cpu: 200m
+          memory: 50Mi
+        limits:
+          #cpu: 200m
+          memory: 50Mi
+
+
+  ## Deploy a Prometheus instance
+  ##
+  prometheus:
+
+    enabled: true
+
+    ## Settings affecting prometheusSpec
+    ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#prometheusspec
+    ##
+    prometheusSpec:
+      ## Enable compression of the write-ahead log using Snappy.
+      ##
+      walCompression: false
+
+      ## Prometheus StorageSpec for persistent data
+      ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/user-guides/storage.md
+      ##
+      storageSpec:
+      ## Using PersistentVolumeClaim
+      ##
+        volumeClaimTemplate:
+          spec:
+            resources:
+              requests:
+                storage: 10Gi
+
+      resources:
+        limits:
+          #cpu: 200m
+          memory: 2500Mi
+        requests:
+          memory: 2000Mi
+          cpu: 200m
+
+      additionalScrapeConfigs:
+
+        # scrape metrics for octavia (test)
+        # first enable them as described here: https://docs.openstack.org/octavia/latest/user/guides/monitoring.html
+        # octavia is down => do not use it right now
+        #- job_name: "octavia"
+        #  static_configs:
+        #    - targets: ["10.119.118.217:8088"]
+
+        # static targets
+        # will be done using OVHcloud dedicated servers service discovery
+        #- job_name: "node-exporter"
+        #  static_configs:
+        #    - targets: ["10.119.250.101:9101"]
+
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        # add basic auth...
+        traefik.ingress.kubernetes.io/router.middlewares: prometheus-http-basic@kubernetescrd
+      hosts:
+        - prometheus.esante.gouv.fr
+      path: /
+      tls:
+      - secretName: prometheus-general-tls
+        hosts:
+        - prometheus.esante.gouv.fr
+
+  ## Provide custom recording or alerting rules to be deployed into the cluster.
+  ##
+  additionalPrometheusRulesMap:
+    rule-name:
+      groups:
+      - name: cert-manager
+        rules:
+        - alert: CertificateExpiringSoon
+          expr: |
+            avg by (name, namespace) (
+              certmanager_certificate_expiration_timestamp_seconds - time()
+            ) < (21 * 24 * 60 * 60)
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Certificate {{ $labels.name }} in namespace {{ $labels.exported_namespace }} is expiring soon"
+            description: "Certificate will expire in less than 21 days"
+        - alert: CertificateRenewalFailure
+          expr: |
+            increase(certmanager_certificate_renewal_errors_total[2h]) > 0
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Certificate renewal failed for {{ $labels.name }}"
+            description: "Certificate renewal has failed in the last 2 hours"
+        - alert: CertManagerPodNotReady
+          expr: |
+            kube_pod_container_status_ready{namespace="cert-manager"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "cert-manager pod not ready"
+            description: "cert-manager pod has not been ready for 5 minutes"
+
+
+  # for node exporter, use nodename instead of ip:port
+  prometheus-node-exporter:
+    prometheus:
+      monitor:
+        relabelings:
+          - sourceLabels: [__meta_kubernetes_endpoint_node_name]
+            targetLabel: instance
+
+    resources:
+      limits:
+      #   cpu: 200m
+        memory: 50Mi
+      requests:
+        cpu: 100m
+        memory: 30Mi
+
+  alertmanager:
+    alertmanagerSpec:
+      resources:
+      limits:
+      #   cpu: 200m
+        memory: 150Mi
+      requests:
+        cpu: 50m
+        memory: 50Mi
+
+    # send alerts to slack
+    # first create an app at slack at: https://api.slack.com/apps with Incoming Webhooks
+    config:
+      route:
+        group_by: ["alertname", "severity"]
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 12h
+        receiver: "slack-ans"
+        routes:
+          # ignore infoinhibitor and watchdog - do not continue
+          - matchers:
+              - alertname =~ "InfoInhibitor|Watchdog"
+            receiver: 'null'
+          # 4h for critical
+          - matchers:
+              - severity = critical
+            group_by: ["alertname", "severity"]
+            repeat_interval: 4h
+            receiver: "slack-ans"
+            continue: true
+      receivers:
+        - name: "null"
+        - name: "slack-ans"
+          slack_configs:
+            - send_resolved: true
+              api_url: https://hooks.slack.com/services/xxxx/xxxx/xxxx
+              channel: "#ans"
+              color: '{{ template "slack.color" . }}'
+              title: '{{ template "slack.title" . }}'
+              text: '{{ template "slack.text" . }}'
+              actions:
+                - type: button
+                  text: 'Runbook :green_book:'
+                  url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
+                - type: button
+                  text: 'Query :mag:'
+                  url: '{{ (index .Alerts 0).GeneratorURL }}'
+                - type: button
+                  text: 'Dashboard :chart_with_upwards_trend:'
+                  url: '{{ (index .Alerts 0).Annotations.dashboard_url }}'
+                 #- type: button
+                 #  text: 'Silence :no_bell:'
+                 #  url: '{{ template "__alert_silence_link" . }}'
+
+    templateFiles:
+      template_slack.tmpl: |-
+        #{{ define "__alert_silence_link" -}}
+        #  {{ .ExternalURL }}/#/silences/new?filter=%7B
+        #  {{- range .CommonLabels.SortedPairs -}}
+        #      {{- if ne .Name "alertname" -}}
+        #          {{- .Name }}%3D"{{- .Value -}}"%2C%20
+        #      {{- end -}}
+        #  {{- end -}}
+        #  alertname%3D"{{- .CommonLabels.alertname -}}"%7D
+        #{{- end }}
+        {{- define "__alert_severity" -}}
+            {{- if eq .CommonLabels.severity "critical" -}}
+            *Severity:* :rotating_light: `Critical`
+            {{- if eq .Status "firing" -}}
+            {{- "\n" -}}
+            {{- "\n" -}}
+            *Action required @kiki @lejav*
+            {{- end -}}
+            {{- else if eq .CommonLabels.severity "warning" -}}
+            *Severity:* :warning: `Warning`
+            {{- else if eq .CommonLabels.severity "info" -}}
+            *Severity:* :round_info_mark:  `Info`
+            {{- else -}}
+            *Severity:* :question: {{ .CommonLabels.severity -}}
+            {{- end -}}
+            {{- "\n" -}}
+            {{- "\n" -}}
+        {{- end -}}
+        {{- define "__alert_summary" -}}
+            {{- if (index .Alerts 0).Annotations.summary -}}
+            *Summary:* {{ (index .Alerts 0).Annotations.summary -}}
+            {{- end -}}
+            {{- "\n" -}}
+            {{- "\n" -}}
+        {{- end -}}
+        {{- define "__alert_description" -}}
+            *Description:* {{- "\n" -}}
+            {{- range .Alerts -}}
+              {{- "\t" -}}
+              {{- if .Annotations.description -}}
+              {{- .Annotations.description -}}
+              {{- end -}}
+              {{- if .Annotations.message -}}
+              {{- .Annotations.message -}}
+              {{- end -}}
+              {{- "\n" -}}
+            {{- end -}}
+            {{- "\n" -}}
+        {{- end -}}
+        {{- define "slack.title" -}}
+          [ {{ .Status | toUpper -}}{{- if eq .Status "firing" }}: {{ .Alerts.Firing | len -}}{{- end }} ] {{ .CommonLabels.alertname -}}
+        {{- end -}}
+        {{- define "slack.text" -}}
+            {{- template "__alert_severity" . -}}
+            {{- template "__alert_summary" . -}}
+            {{- template "__alert_description" . -}}
+        {{- end -}}
+        {{- define "slack.color" -}}
+            {{- if eq .Status "firing" -}}
+                {{- if eq .CommonLabels.severity "warning" -}}
+                    warning
+                {{- else if eq .CommonLabels.severity "critical" -}}
+                    danger
+                {{- else -}}
+                    #439FE0
+                {{- end -}}
+            {{- else -}}
+            good
+            {{- end -}}
+        {{- end -}}
+
+  kube-state-metrics:
+    resources:
+      limits:
+      #   cpu: 200m
+        memory: 150Mi
+      requests:
+        cpu: 100m
+        memory: 30Mi
+
+  # label is not the default (k8s-app=kube-proxy)
+  # by the way, kube proxy only listens on localhost for metrics port
+  kubeProxy:
+    enabled: false
+    service:
+      selector:
+        name: kube-proxy
+
+
