@@ -253,12 +253,12 @@ kube-prometheus-stack:
   alertmanager:
     alertmanagerSpec:
       resources:
-      limits:
-      #   cpu: 200m
-        memory: 150Mi
-      requests:
-        cpu: 50m
-        memory: 50Mi
+        limits:
+        # cpu: 200m
+          memory: 150Mi
+        requests:
+          cpu: 50m
+          memory: 50Mi
 
     # send alerts to slack
     # first create an app at slack at: https://api.slack.com/apps with Incoming Webhooks
