@@ -26,9 +26,9 @@ cert-manager:
       #   memory: 32Mi
 
   prometheus:
-    enabled: false
+    enabled: true
     servicemonitor:
-      enabled: false
+      enabled: true
       prometheusInstance: default
       targetPort: 9402
       path: /metrics
