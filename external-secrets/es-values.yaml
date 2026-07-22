@@ -14,7 +14,7 @@ external-secrets:
 
   serviceMonitor:
     # -- Specifies whether to create a ServiceMonitor resource for collecting Prometheus metrics
-    enabled: false
+    enabled: true
 
     # -- How should we react to missing CRD "`monitoring.coreos.com/v1/ServiceMonitor`"
     #

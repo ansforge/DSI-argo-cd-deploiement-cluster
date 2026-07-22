@@ -22,10 +22,10 @@ argo-cd:
 
     metrics:
       # -- Deploy metrics service
-      enabled: false
+      enabled: true
       serviceMonitor:
         # -- Enable a prometheus ServiceMonitor
-        enabled: false
+        enabled: true
         # -- Prometheus ServiceMonitor interval
         interval: 180s
         # -- Prometheus [RelabelConfigs] to apply to samples before scraping
@@ -49,7 +49,7 @@ argo-cd:
         annotations: {}
       rules:
         # -- Deploy a PrometheusRule for the application controller
-        enabled: false
+        enabled: true
         # -- PrometheusRule namespace
         namespace: "" # "prometheus"
         # -- PrometheusRule selector
@@ -168,10 +168,10 @@ argo-cd:
     ## Server metrics service configuration
     metrics:
       # -- Deploy metrics service
-      enabled: false
+      enabled: true
       serviceMonitor:
         # -- Enable a prometheus ServiceMonitor
-        enabled: false
+        enabled: true
         # -- Prometheus ServiceMonitor interval
         interval: 30s
         # -- Prometheus [RelabelConfigs] to apply to samples before scraping
@@ -210,10 +210,10 @@ argo-cd:
     ## Repo server metrics service configuration
     metrics:
       # -- Deploy metrics service
-      enabled: false
+      enabled: true
       serviceMonitor:
         # -- Enable a prometheus ServiceMonitor
-        enabled: false
+        enabled: true
         # -- Prometheus ServiceMonitor interval
         interval: 30s
         # -- Prometheus [RelabelConfigs] to apply to samples before scraping
@@ -397,11 +397,11 @@ argo-cd:
         memory: 128Mi
     metrics:
       # -- Deploy metrics service
-      enabled: false
+      enabled: true
 
       serviceMonitor:
         # -- Enable a prometheus ServiceMonitor
-        enabled: false
+        enabled: true
         # -- Interval at which metrics should be scraped
         interval: 30s
         # -- Prometheus [RelabelConfigs] to apply to samples before scraping
@@ -426,7 +426,7 @@ argo-cd:
     ## Prometheus redis-exporter sidecar
     exporter:
       # -- Enable Prometheus redis-exporter sidecar
-      enabled: false
+      enabled: true
       # -- Resource limits and requests for redis-exporter sidecar
       resources:
         # limits:
