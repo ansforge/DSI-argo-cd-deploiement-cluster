@@ -22,7 +22,7 @@ ingress:
   ## Additional ingress annotations
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    traefik.ingress.kubernetes.io/router.middlewares: rag-si-samu-http-basic@kubernetescrd
+      #traefik.ingress.kubernetes.io/router.middlewares: rag-si-samu-http-basic@kubernetescrd
 
   ## Ingress TLS configuration
   tls:
