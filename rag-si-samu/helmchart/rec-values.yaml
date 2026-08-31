@@ -4,7 +4,7 @@
 
 replicaCount: 3
 image:
-  tag: "1.6.39" 
+  tag: "1.6.40" 
 
 ingress:
   ## Set to true to enable ingress record generation
