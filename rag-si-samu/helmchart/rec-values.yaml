@@ -4,7 +4,7 @@
 
 replicaCount: 3
 image:
-  tag: "1.6.45" 
+  tag: "1.6.47" 
 
 ingress:
   ## Set to true to enable ingress record generation
@@ -63,3 +63,8 @@ env:
       secretKeyRef:
         name: rag-si-samu-secret
         key: AUTH_CLIENT_SECRET
+  - name: ADMIN_USER_IDS
+    valueFrom:
+      secretKeyRef:
+        name: rag-si-samu-secret
+        key: ADMIN_USER_IDS
