@@ -4,7 +4,7 @@
 
 replicaCount: 3
 image:
-  tag: "1.6.45" 
+  tag: "1.6.46" 
 
 ingress:
   ## Set to true to enable ingress record generation
@@ -43,6 +43,9 @@ minAvailable: 1
 # maxUnavailable: 1
 
 env:
+  # ADMIN USERS: FUL, CPA, NGE
+  - name: ADMIN_USER_IDS
+    value: "10SISAMU00011190,10SISAMU20017219,10SISAMU00016459"
   - name: AUTH_SECRET
     valueFrom:
       secretKeyRef:
